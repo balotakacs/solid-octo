@@ -1,0 +1,7 @@
+version: '3'
+services:
+  ansible:
+    container_name: ansible_control_node
+    build: .
+    volumes:
+      - ./ansible:/ansible

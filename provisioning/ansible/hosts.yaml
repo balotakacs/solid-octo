@@ -1,0 +1,7 @@
+piservers:
+  hosts:
+    raspberrypi5:
+      ansible_host: "{{ raspberrypi_ip }}"
+      ansible_ssh_user: "{{ raspberrypi_username }}"
+      ansible_ssh_pass: "{{ raspberrypi_password }}"
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

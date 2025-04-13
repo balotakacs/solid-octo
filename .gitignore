@@ -1,0 +1,3 @@
+*.enc
+*.env
+provisioning/ansible/group_vars/*.yaml
