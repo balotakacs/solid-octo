@@ -1,0 +1,39 @@
+- name: Cloudflare for tunnelling
+  hosts: piservers
+  become: yes
+  tasks:
+    - name: Download and Install cloudflared
+      tags: cloudflared-install
+      ansible.builtin.shell: |
+        sudo mkdir -p --mode=0755 /usr/share/keyrings
+        curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+
+        # Add this repo to your apt repositories
+        echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared bookworm main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+
+        # install cloudflared
+        sudo apt-get update && sudo apt-get install cloudflared
+      
+
+    - name: Update cloudflared
+      tags: cloudflared-update
+      ansible.builtin.shell: |
+        sudo apt-get upgrade cloudflared && ssudo systemctl restart cloudflared.service
+      
+
+    - name: Create tunnel  # this won't work since it's interactive, use API
+      tags: cloudflared-tunnel
+      ansible.builtin.shell: |
+        cloudflared tunnel create "{{ raspberrypi_cloudflare_tunnel }}"
+
+    - name: Download and Install cloudflared-warp
+      tags: cloudflared-warp
+      ansible.builtin.shell: |
+        # Add cloudflare gpg key
+        curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+
+        # Add this repo to your apt repositories
+        echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+
+        # Install
+        sudo apt-get update && sudo apt-get install cloudflare-warp

@@ -1,0 +1,101 @@
+- name: Update and Upgrade
+  hosts: piservers
+  become: yes
+  tasks:
+    - name: Run sudo apt update && sudo apt upgrade
+      ansible.builtin.shell: |
+        sudo apt update
+        sudo apt upgrade -y
+      tags: update
+
+- name: Core packages
+  hosts: piservers
+  become: yes
+  tasks:
+    - name: Install packages
+      apt:
+        name:
+          - curl
+          - jq
+          - lsb-release
+        state: present
+        update_cache: yes
+      tags: core-packages
+
+
+- name: Mount USB drive for Timeshift
+  hosts: piservers
+  become: yes
+  vars:
+    mount_point: /mnt/timeshift
+  tasks:
+    - name: Ensure mount point directory exists
+      file:
+        path: "{{ mount_point }}"  # Path to the directory (e.g., /mnt/timeshift)
+        state: directory           # Ensure it is a directory
+        owner: root                # Set owner to root
+        group: root                # Set group to root
+        mode: '0755'               # Set directory permissions to 0755 (read-write-execute for owner) (0555 is read-only)
+
+    - name: Debug raspberrypi_ext_uuid
+      debug:
+        var: raspberrypi_ext_uuid
+
+    - name: Debug /etc/fstab contents
+      debug:
+        var: fstab_contents.stdout
+
+    - name: Add mount to /etc/fstab
+      lineinfile:
+        path: /etc/fstab
+        line: "UUID={{ raspberrypi_ext_uuid }} {{ mount_point }} ext4 defaults 0 2"
+        state: present
+        create: yes
+
+    - name: Test mount the new entry
+      command: mount -a
+      register: mount_result
+      failed_when: mount_result.rc != 0
+      changed_when: false
+
+
+- name: Install and setup Timeshift
+  hosts: piservers
+  become: yes
+  tasks:
+    - name: Install Timeshift package
+      apt:
+        name: timeshift
+        state: present
+        update_cache: yes
+      tags: timeshift
+
+    - name: Deploy timeshift config
+      template:
+        src: templates/timeshift.json.j2
+        dest: /etc/timeshift/timeshift.json
+        owner: root
+        group: root
+        mode: '0644'              # Set directory permissions to 0644 (read-write for owner, read for group and others)
+      tags: timeshift
+
+    - name: Configure Timeshift weekly cron
+      cron:
+        name: "Weekly Timeshift Snapshot"
+        minute: "0"
+        hour: "3"                 # 3 AM
+        weekday: "1"              # Monday
+        user: root
+        job: "/usr/bin/timeshift --create --scripted --comments 'Weekly snapshot' --tags W"
+      tags: timeshift
+
+    - name: Create on-demand Timeshift snapshot
+      command: /usr/bin/timeshift --create --scripted --comments "On-Demand snapshot"
+      tags: system_snapshot
+
+
+      
+
+
+
+  

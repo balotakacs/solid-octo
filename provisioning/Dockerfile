@@ -4,4 +4,6 @@ RUN pip install ansible
 
 RUN apt-get update && apt-get install -y sshpass
 
+WORKDIR /ansible
+
 ENTRYPOINT ["tail", "-f", "/dev/null"]
