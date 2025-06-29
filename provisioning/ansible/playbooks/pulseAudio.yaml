@@ -1,0 +1,42 @@
+- name: My first play
+  hosts: piservers
+  become: yes   
+  tasks:
+    - name: Ping my hosts
+      ansible.builtin.ping:
+
+    - name: Print message
+      ansible.builtin.debug:
+        msg: Hello world. Installing pulseaudio and configuring bluetooth.
+
+    - name: Install PulseAudio and Bluetooth module
+      ansible.builtin.apt:
+        name:
+          - pulseaudio
+          - pulseaudio-module-bluetooth
+        state: present
+        update_cache: yes
+
+    - name: Enable and start PulseAudio user service on login
+      ansible.builtin.shell: |
+        systemctl --user enable pulseaudio
+        systemctl --user start pulseaudio
+      args:
+        executable: /bin/bash
+      become: false
+      # Use 'ansible_ssh_user' to run as logged-in user (adjust if different)
+      # become_user: "{{ ansible_ssh_user }}"
+
+    - name: Set Bluetooth DiscoverableTimeout to 0
+      ansible.builtin.lineinfile:
+        path: /etc/bluetooth/main.conf
+        regexp: '^#?\s*DiscoverableTimeout\s*='
+        line: 'DiscoverableTimeout = 0'
+        insertafter: '^\[General\]'
+        state: present
+
+    - name: Ensure Bluetooth service is enabled and started
+      ansible.builtin.service:
+        name: bluetooth
+        state: started
+        enabled: yes

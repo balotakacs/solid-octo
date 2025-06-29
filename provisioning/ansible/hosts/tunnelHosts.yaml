@@ -1,0 +1,8 @@
+piservers:
+  hosts:
+    raspberrypi5:
+      ansible_host: ssh-pi.balotakacs.com
+      ansible_ssh_user: balotakacs
+      ansible_ssh_pass: maaskade
+      ansible_port: '22'
+      ansible_ssh_common_args: '-o ProxyCommand="cloudflared access ssh --hostname ssh-pi.balotakacs.com"'

@@ -21,6 +21,14 @@ ansible-playbook -i hosts/hosts.yaml playbooks/timeshift.yaml
 ansible-playbook -i hosts/hosts.yaml playbooks/timeshift.yaml --tags system_snapshot
 ```
 
+### Use Cloudflare tunnel to provision PulseAudio and more
+
+We are trying to use cloudflared CLI installed in the container that runs anisble to establish ssh connection via a tunnel into the device in order for our playbooks to run against the PI.
+
+For that we created tunnelHosts.yaml, with ssh-pi.balotakacs.com as the host and a special ProxyCommand as argument to the SSH connection in order to use cloudflared. 
+
+Important caveat: before you are able to use this method, run 'ssh -o "ProxyCommand=cloudflared access ssh --hostname ssh-pi.balotakacs.com" balotakacs@ssh-pi.balotakacs.com' in the container before you  run any ansible comands. This will prompt you to authenticate and aquire a token.
+
 
 ### Lessons learnt
 1. group_vars folder has to be at same level as playbook in Ansible.
